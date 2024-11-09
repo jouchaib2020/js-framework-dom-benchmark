@@ -361,7 +361,7 @@ async function main() {
   let runFrameworks: FrameworkData[];
   let matchesDirectoryArg = (directoryName: string) =>
     frameworkArgument.length === 0 || frameworkArgument.some((arg: string) => arg == directoryName);
-  let frameworks = await initializeFrameworks(benchmarkOptions, matchesDirectoryArg);
+  let frameworks = await initializeFrameworks(benchmarkOptions, matchesDirectoryArg); // add the available frameworks to the corresponding directory
   runFrameworks = frameworks.filter((f) => f.keyed || config.BENCHMARK_RUNNER !== BenchmarkRunner.WEBDRIVER_AFTERFRAME);
 
   if (args.type == "keyed") {
