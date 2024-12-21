@@ -24,15 +24,41 @@ const buildData = (count) => {
 
   return data;
 };
+// Define a TreeNode type
+const buildTreeData = (depth = 5, current = 1) => {
+  if (depth === 0) return null;
 
-const initialState = { data: [], selected: 0 };
+  const node = {
+    id: nextId++,
+    label: `${A[random(A.length)]} ${C[random(C.length)]} ${N[random(N.length)]}`,
+    left: buildTreeData(depth - 1, current * 2),
+    right: buildTreeData(depth - 1, current * 2 + 1),
+  };
+
+  return node;
+};
+
+const initialState = { tree: null, selected: null };
+
+const treeReducer = (state, action) => {
+  switch (action.type) {
+    case 'RUN':
+      return { tree: buildTreeData(10), selected: null }; // Creates a tree with up to 127 nodes
+    case 'CLEAR':
+      return { tree: null, selected: null };
+    // Add more cases as needed for other operations
+    default:
+      return state;
+  }
+};
+
 
 const listReducer = (state, action) => {
   const { data, selected } = state;
 
   switch (action.type) {
     case 'RUN':
-      return { data: buildData(1000), selected: 0 };
+      return { data: buildData(10), selected: 0 };
     case 'RUN_LOTS':
       return { data: buildData(10000), selected: 0 };
     case 'ADD':
@@ -70,6 +96,24 @@ const listReducer = (state, action) => {
       return state;
   }
 };
+const TreeNode = memo(({ node, selected, dispatch }) => {
+  if (!node) return null;
+
+  return (
+    <div className={`node ${selected === node.id ? 'selected' : ''}`} data-id={node.id}>
+      <div className="node-label">
+        <a onClick={() => dispatch({ type: 'SELECT', id: node.id })}>{node.label}</a>
+        <a onClick={() => dispatch({ type: 'REMOVE', id: node.id })}>
+          <span className="glyphicon glyphicon-remove" aria-hidden="true" />
+        </a>
+      </div>
+      <div className="children">
+        <TreeNode node={node.left} selected={selected} dispatch={dispatch} />
+        <TreeNode node={node.right} selected={selected} dispatch={dispatch} />
+      </div>
+    </div>
+  );
+}, (prevProps, nextProps) => prevProps.selected === nextProps.selected && prevProps.node === nextProps.node);
 
 const Row = memo(({ selected, item, dispatch }) => (
     <tr className={selected ? "danger" : ""}>
@@ -113,19 +157,18 @@ const Jumbotron = memo(({ dispatch }) => (
 ), () => true);
 
 const Main = () => {
-  const [{ data, selected }, dispatch] = useReducer(listReducer, initialState);
+  const [{ tree, selected }, dispatch] = useReducer(treeReducer, initialState);
 
-  return (<div className="container">
-    <Jumbotron dispatch={dispatch} />
-    <table className="table table-hover table-striped test-data">
-      <tbody>
-        {data.map(item => (
-          <Row key={item.id} item={item} selected={selected === item.id} dispatch={dispatch} />
-        ))}
-      </tbody>
-    </table>
-    <span className="preloadicon glyphicon glyphicon-remove" aria-hidden="true" />
-  </div>);
-}
+  return (
+    <div className="container">
+      <Jumbotron dispatch={dispatch} />
+      <div className="tree-container">
+        {tree && <TreeNode node={tree} selected={selected} dispatch={dispatch} />}
+      </div>
+      <span className="preloadicon glyphicon glyphicon-remove" aria-hidden="true" />
+    </div>
+  );
+};
+
 
 createRoot(document.getElementById("main")).render(<Main/>);

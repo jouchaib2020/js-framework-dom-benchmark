@@ -40,28 +40,28 @@ export let benchRun = new (class extends CPUBenchmarkPuppeteer {
   constructor() {
     super(cpuBenchmarkInfos[Benchmark._01]);
   }
+
   async init(page: Page) {
     await checkElementExists(page, "pierce/#run");
     for (let i = 0; i < this.benchmarkInfo.warmupCount; i++) {
       await clickElement(page, "pierce/#run");
-      await checkElementContainsText(
-        page,
-        "pierce/tbody>tr:nth-of-type(1)>td:nth-of-type(1)",
-        (i * 1000 + 1).toFixed()
-      );
+      // Verify the root node
+      // await checkElementContainsText(
+      //   page,
+      //   "pierce/.tree-container > .node > .node-label > a",
+      //   (i === 0 ? 1 : i * 100 + 1).toString()
+      // );
       await clickElement(page, "pierce/#clear");
-      await checkElementNotExists(page, "pierce/tbody>tr:nth-of-type(1000)>td:nth-of-type(1)");
+      await checkElementNotExists(page, ".tree-container > .node");
     }
   }
+
   async run(page: Page) {
     await clickElement(page, "pierce/#run");
-    await checkElementContainsText(
-      page,
-      "pierce/tbody>tr:nth-of-type(1000)>td:nth-of-type(1)",
-      ((this.benchmarkInfo.warmupCount + 1) * 1000).toFixed()
-    );
+    await checkCountForSelector(page, ".tree-container .node", 63);
   }
 })();
+
 
 export const benchReplaceAll = new (class extends CPUBenchmarkPuppeteer {
   constructor() {

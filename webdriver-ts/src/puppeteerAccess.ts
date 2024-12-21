@@ -1,7 +1,6 @@
 import * as puppeteer from "puppeteer-core";
 import { Page } from "puppeteer-core";
 import { BenchmarkOptions, wait } from "./common.js";
-
 export async function checkElementNotExists(page: Page, selector: string) {
   let start = Date.now();
   for (let k = 0; k < 10; k++) {
@@ -55,7 +54,7 @@ export async function checkElementContainsText(page: Page, selector: string, exp
     }
     await wait(k < 3 ? 10 : 1000);
   }
-  console.log("checkElementExists waited " + (Date.now() - start) + " but no luck");
+  console.log("checkElementContainsText waited " + (Date.now() - start) + " but no luck");
   throw `checkElementContainsText ${selector} failed. expected ${expectedText}, but was ${txt}`;
 }
 
@@ -141,3 +140,4 @@ export async function startBrowser(benchmarkOptions: BenchmarkOptions): Promise<
   });
   return browser;
 }
+

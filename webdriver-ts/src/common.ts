@@ -55,9 +55,6 @@ export interface BenchmarkOptions {
 
 export enum BenchmarkRunner {
   PUPPETEER = "puppeteer",
-  PLAYWRIGHT = "playwright",
-  WEBDRIVER_CDP = "webdrivercdp",
-  WEBDRIVER_AFTERFRAME = "webdriver-afterframe",
 }
 
 export let config = {

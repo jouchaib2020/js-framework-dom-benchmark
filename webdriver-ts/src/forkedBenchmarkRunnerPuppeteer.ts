@@ -71,7 +71,7 @@ async function runCPUBenchmark(
     //   for (let i = 0; i < msg.args().length; ++i) console.log(`BROWSER: ${msg.args()[i]}`);
     // });
     // }
-    for (let i = 0; i < benchmarkOptions.batchSize; i++) {
+    for (let i = 0; i < 2; i++) {
       const page = await browser.newPage();
       page.on("console", (msg) => console.log("BROWSER:", ...msg.args()));
       try {

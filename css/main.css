@@ -24,3 +24,69 @@ body {
 .jumbotron .row h1 {
     font-size: 40px;
 }
+/* 1. Container for the entire tree */
+.tree-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+
+/* 2. Each node in the tree */
+.node {
+    position: relative;
+    padding: 10px 20px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    width: 200px;
+    text-align: center;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* 3. Label within each node */
+.node-label a {
+    text-decoration: none;
+    color: #333;
+    cursor: pointer;
+    display: inline-block;
+    width: 100%;
+}
+
+/* 4. Highlight selected node */
+.selected {
+    background-color: #ffeeba;
+    border-color: #ffeeba;
+}
+
+/* 5. Container for child nodes */
+.children {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+/* 6. Lines connecting parent to children */
+.node::before,
+.node::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    width: 0;
+    height: 20px;
+    border-left: 1px solid #ccc;
+}
+
+.node::before {
+    left: 25%;
+}
+
+.node::after {
+    right: 25%;
+}
+
+.node:first-child::before,
+.node:last-child::after {
+    display: none;
+}

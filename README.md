@@ -1,134 +1,60 @@
-# js-framework-benchmark
+# Common Operations in Tree-Like Front-End Structures
 
-This is a simple benchmark for several javascript frameworks. The benchmarks creates a large table with randomized entries and measures the time for various operations including rendering duration.
+## Add New Children to Existing Nodes
+- **Example:** When a user creates a nested comment or a new sub-item.
 
-![Screenshot](images/screenshot.png?raw=true "Screenshot")
+## Remove Children from Nodes
+- **Example:** Deleting a comment chain.
 
-## Security advice
+## Insert New Subtrees in the Middle
+- **Example:** Loading data on demand and inserting it into the existing tree structure.
 
-Currently there are 186 implemenations in this repository. It's of course impossible for me to make a security assessment
-for all those implementations. `npm ci` and `npm install` can execute arbitraty commands, so they should be executed only for packages you trust. Consequently I build on a dedicated virtual private linux server such that I don't have to install the packages for all those implemenations on my laptop. There's a prebuild build.zip for each chrome release you can download such that you can avoid installing the packages from all implementations. 
-(I don't know of any (attempted) case for malicious packages in this repository, so please take it just as a general warning.)
+## Reorder Sibling Nodes
+- **Example:** Dragging and dropping items into a new position within the same parent.
 
-The server implemenation in this repository should only be started on your local machine and access should be restricted to your local machine. I recommend against starting the server such that it can be publically accessed from the internet.
+## Toggle Visibility of Entire Branches
+- **Example:** Allowing users to expand or collapse sections of the tree.
 
-## About the benchmarks
+## Update Node Data Without Affecting Siblings
+- **Example:** Frequently updating the data of a specific node while keeping its siblings unchanged.
 
-The following operations are benchmarked for each framework:
+## Move Subtrees Between Different Parents
+- **Example:** Reorganizing a menu hierarchy by moving subtrees to different parent nodes.
 
-- create rows: Duration for creating 1,000 rows after the page loaded (no warmup).
-- replace all rows: Duration for replacing all 1,000 rows of the table (with 5 warmup iterations).
-- partial update: Time to update the text of every 10th row for a table with 10,000 rows (with 5 warmup iterations).
-- select row: Duration to highlight a row in response to a click on the row. (with 5 warmup iterations).
-- swap rows: Time to swap 2 rows on a table with 1,000 rows. (with 5 warmup iterations).
-- remove row: Duration to remove a row for a table with 1,000 rows. (with 5 warmup iterations).
-- create many rows: Duration to create 10,000 rows (no warmup)
-- append rows to large table: Duration for adding 1,000 rows on a table of 10,000 rows (no warmup).
-- clear rows: Duration to clear the table filled with 10,000 rows. (no warmup)
-- ready memory: Memory usage after page load.
-- run memory: Memory usage after adding 1,000 rows.
-- update memory: Memory usage after clicking 5 times update for a table with 1,000 rows.
-- replace memory: Memory usage after clicking 5 times create 1,000 rows.
-- repeated clear memory: Memory usage after creating and clearing 1,000 rows for 5 times.
-- update memory: Memory usage after clicking 5 times update for a table with 1,000 rows.
-- startup time: Duration for loading and parsing the javascript code and rendering the page.
-- consistently interactive: The lighthouse metric TimeToConsistentlyInteractive: A pessimistic TTI - when the CPU and network are both definitely very idle. (no more CPU tasks over 50ms)
-- script bootup time: The lighthouse metric ScriptBootUpTtime: The total ms required to parse/compile/evaluate all the page's scripts
-- main thread work cost: The lighthouse metric MainThreadWorkCost: Total amount of time spent doing work on the main thread includes style/layout/etc.
-- total byte weight: The lighthouse metric TotalByteWeight: Network transfer cost (post-compression) of all the resources loaded into the page.
+## Replace Entire Branches
+- **Example:** Swapping out a collapsed section for a different view or component.
 
-For all benchmarks the duration is measured including rendering time. You can read some details on this [article](http://www.stefankrause.net/wp/?p=218) and in the [wiki](https://github.com/krausest/js-framework-benchmark/wiki/How-the-duration-is-measured). Starting with chrome 118 the overall performance is computed as a [weighted geometric mean](https://github.com/krausest/js-framework-benchmark/wiki/Computation-of-the-weighted-geometric-mean).
+## Handle Partial Updates to Leaves
+- **Example:** Updating only a few leaf nodes without reprocessing the entire tree.
 
-## Official results
+## Attach Event Listeners to Modified Subtrees
+- **Example:** Rebinding event listeners only within the subtree that has been modified.
 
-Official results are posted on the [official results page](https://krausest.github.io/js-framework-benchmark/index.html).
-My [blog](http://www.stefankrause.net/wp) has a few articles about the benchmark.
-Older results of this benchmark are outlined on my blog ([round 1](http://www.stefankrause.net/wp/?p=191), [round 2](http://www.stefankrause.net/wp/?p=283), [round 3](http://www.stefankrause.net/wp/?p=301), [round 4](http://www.stefankrause.net/wp/?p=316), [round 5](http://www.stefankrause.net/wp/?p=392), [round 6](http://www.stefankrause.net/wp/?p=431), [round 7](http://www.stefankrause.net/wp/?p=454) and [round 8](http://www.stefankrause.net/wp/?p=504)).
+## Manage Dynamic Conditions for Showing/Hiding Children
+- **Example:** Hiding or showing children based on some state of the parent node.
 
-## Snapshot of the results
+## Refresh Part of the Tree in Response to External Actions
+- **Example:** Updating a portion of the tree when receiving a server push or external event.
 
-The current snapshot that may not have the same quality (i.e.
-results might be for mixed browser versions, number of runs per benchmark may vary) can be seen [here](https://krausest.github.io/js-framework-benchmark/current.html)
-[![Results](images/results.png?raw=true "Results")](https://krausest.github.io/js-framework-benchmark/current.html)
+## Perform Incremental Loads
+- **Example:** Loading new layers of the tree only when a user expands a node.
 
-## Keyed vs non-keyed frameworks
+## Execute Large-Scale Changes
+- **Example:** Removing a subtree and adding a different one as part of a significant update.
 
-Some frameworks like React, Vue.js or Angular, allow you to create a 1:1 relationship between a data item and a DOM node by assigning a “key” attribute (or for Angular, specifying “trackBy” in *ngFor). If you use some identifier of the data as the key, you get the “keyed” mode. Any update to the data will update the associated DOM node. If you reorder the list, the DOM nodes will be reordered accordingly.
+## Track Interdependencies Between Sibling Nodes
+- **Example:** Toggling one node’s property affects how another sibling is rendered.
 
-The other mode is “non-keyed” and this is what e.g. vue.js uses by default for lists. In this mode, a change to the data items can modify DOM nodes that were associated with other data before. This can be more performant, since costly DOM operations can be avoided (e.g. first removing old nodes and then adding new nodes) and the existing DOM nodes are updated to display the new data. For React and Angular, using the item index as the key uses “non-keyed” mode for those frameworks.
+## Handle Concurrent Updates
+- **Example:** Allowing the user to edit one branch while automated updates occur in another branch.
 
-Depending on your requirements, the “non-keyed” mode can be a performance gain or can cause severe problems, so one must carefully choose the mode and check that the framework supports that mode.
+## Perform Partial Re-renders
+- **Example:** Changing a single subtree while keeping the rest of the tree unchanged.
 
-Read more here: [https://www.stefankrause.net/wp/?p=342](https://www.stefankrause.net/wp/?p=342)
+## Measure Time to Fully Unmount Subtrees
+- **Example:** Assessing how long it takes to completely remove a subtree when the user navigates away.
 
-# 1 Run pre-built binaries for all frameworks
-
-There are currently 186 implementations in this repository. Installing (and maintaining) those can be challenging, but here are simplified instructions how to get started. See the security advice above to read why that might be a good idea.
-
-## 1.1 Prerequisites
-
-Have _node.js (>=v20.9.0)_ installed. If you want to do yourself a favour use nvm for that. The benchmark has been tested with node v20.9.0.
-Please make sure that the following command work before trying to build:
-
-```
-> npm
-npm -version
-10.1.0
-> node --version
-v20.9.0
-```
-
-## 1.2 Downloading the pre-built binaries and starting the server
-building all frameworks can be challenging. There's a new way that allows to skip that and just run the benchmark without builiding all implementations.
-
-
-Start with checking out a tagged release like that. Pick the release that you want (e.g. chrome 100):
-```
-git clone https://github.com/krausest/js-framework-benchmark.git
-cd js-framework-benchmark
-git checkout chrome100 -b release
-npm ci && npm run install-local
-```
-Download the build.zip for that release from https://github.com/krausest/js-framework-benchmark/releases
-and put the build.zip into the js-framework-benchmark directory and unzip the prebuilt files:
-```
-unzip build.zip
-```
-You're now ready to start the http-server. Let the server run in the background
-```
-npm start
-```
-## 1.3 Running the benchmarks and handling errors
-
-In a new console window you can now run the benchmarks:
-```
-npm run bench
-```
-
-This will take some time (currently about 12 hours on my machine). Finally create the results table:
-```
-npm run results
-```
-
-Open js-framework-benchmark/webdriver-ts-results/table.html in a browser and take a look at the results. You can open the result table with the link [http://localhost:8080/webdriver-ts-results/dist/index.html](http://localhost:8080/webdriver-ts-results/dist/index.html)
-
-
-Here's what you should do when the benchmark run was not successful. Let's assume the benchmark printed the following to the console:
-```
-================================
-The following benchmarks failed:
-================================
-Executing frameworks/non-keyed/ef-js and benchmark 04_select1k failed: No paint event found
-run was not completely successful Benchmarking failed with errors
-```
-You'll now have to run the benchmark again for those that failed like that:
-```
-npm run bench -- --framework non-keyed/ef-js --benchmark 04_
-```
-The you can then continue with creating the results table `npm run results`.
-Another workaround is to delete the folders of frameworks you can't run or you are not interested in.
-
-# 2 The old and hard way: Building the frameworks and running the benchmark 
+# 2 Building the frameworks and running the benchmark 
 
 ## 2.1 Prerequisites
 
@@ -558,59 +484,3 @@ Helpful tips:
 This work is derived from a benchmark that Richard Ayotte published on https://gist.github.com/RichAyotte/a7b8780341d5e75beca7 and adds more framework and more operations. Thanks for the great work.
 
 Thanks to Baptiste Augrain for making the benchmarks more sophisticated and adding frameworks.
-
-# History
-
-Frameworks without significant activity on github or npm for more than a year will be removed (_automatic commits like dependabot and minor updates, like docs editions, are ignored_).
-
-## 2023-12-10
-The following frameworks were archived after chrome 120. Their last results are included in [chrome 120 results](https://krausest.github.io/js-framework-benchmark/2023/table_chrome_120.0.6099.62.html).
-- [x] petite-vue
-
-## 2023-11-07
-The following frameworks were archived after chrome 119. Their last results are included in [chrome 119 results](https://krausest.github.io/js-framework-benchmark/2023/table_chrome_119.0.6045.105.html).
-- [x] sifrr
-
-## 2023-10-22
-The following frameworks were archived after chrome 118. Their last results are included in [chrome 118 results](https://krausest.github.io/js-framework-benchmark/2023/table_chrome_118.0.5993.70.html).
-- [x] 1more
-- [x] bdc
-- [x] choo
-- [x] domdiff
-- [x] domvm
-- [x] endorphin
-- [x] etch
-- [x] forgo
-- [x] fullweb-helpers
-- [x] fullweb-template
-- [x] heresy
-- [x] hullo
-- [x] lighterhtml
-- [x] neverland
-- [x] resonatejs
-- [x] sledgehammer
-- [x] uhydro
-
-
-## 2020-7-9
-
-- [x] etch Last commit Sep 12, 2018
-- [x] hyperoop Last significant commit Dec 23, 2018
-- [x] faster-dom (to be replaced by a new revact implementation)
-- [x] plastiq (to be replaced by a new Hyperdom implementation)
-- [x] rawact Last commit Dec 3, 2018
-- [x] react-djinn Last NPM publish 2019-05-03 (the Github org a repo aren't available anymore)
-- [x] react-lite Last commit Mar 29, 2019
-- [x] redux-combiner Last commit May 14, 2018
-- [x] surplus Last commit Jan 5, 2019
-- [x] gruu Last commit Jun 23, 2019
-- [x] lite-html Last commit Sep 7, 2018
-
-## 2019-9-16
-
-- [x] angular-light Last commit Nov 30, 2017
-- [x] nx. Last commit Feb 2017
-- [x] maik-h Last commit Dec 15, 2017
-- [x] rivets Last commit Oct 22, 2016
-- [x] tsers. Last commit Jun 19, 2016
-
