@@ -195,7 +195,7 @@ async function runBench(
   let plausibilityCheck = new PlausibilityCheck();
 
   for (let i = 0; i < runFrameworks.length; i++) {
-    const j = 0;
+    for (let j = 0; j < 9; j++){
       try {
         let result;
 
@@ -249,6 +249,7 @@ async function runBench(
       console.log(e);
     });
     throw "Benchmarking failed with errors";
+  }
   }
 }
 

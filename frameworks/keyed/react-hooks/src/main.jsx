@@ -1,174 +1,146 @@
-import { memo, useReducer } from 'react';
+import React, { useReducer, memo } from 'react';
 import { createRoot } from 'react-dom/client';
 
-const random = (max) => Math.round(Math.random() * 1000) % max;
+import {
+  buildTreeData,
+  resetNextId,
+  attachCopyAtLeaf,
+  removeNodeById,
+  swapTwoNodes,
+  findAnUpdate
+} from '../../../Common/treeOperations'
 
-const A = ["pretty", "large", "big", "small", "tall", "short", "long", "handsome", "plain", "quaint", "clean",
-  "elegant", "easy", "angry", "crazy", "helpful", "mushy", "odd", "unsightly", "adorable", "important", "inexpensive",
-  "cheap", "expensive", "fancy"];
-const C = ["red", "yellow", "blue", "green", "pink", "brown", "purple", "brown", "white", "black", "orange"];
-const N = ["table", "chair", "house", "bbq", "desk", "car", "pony", "cookie", "sandwich", "burger", "pizza", "mouse",
-  "keyboard"];
+const initialTreeState = { tree: null, selected: null };
 
-let nextId = 1;
-
-const buildData = (count) => {
-  const data = new Array(count);
-
-  for (let i = 0; i < count; i++) {
-    data[i] = {
-      id: nextId++,
-      label: `${A[random(A.length)]} ${C[random(C.length)]} ${N[random(N.length)]}`,
-    };
-  }
-
-  return data;
-};
-// Define a TreeNode type
-const buildTreeData = (depth = 5, current = 1) => {
-  if (depth === 0) return null;
-
-  const node = {
-    id: nextId++,
-    label: `${A[random(A.length)]} ${C[random(C.length)]} ${N[random(N.length)]}`,
-    left: buildTreeData(depth - 1, current * 2),
-    right: buildTreeData(depth - 1, current * 2 + 1),
-  };
-
-  return node;
-};
-
-const initialState = { tree: null, selected: null };
-
-const treeReducer = (state, action) => {
+const N = 10;
+function treeReducer(state, action) {
   switch (action.type) {
     case 'RUN':
-      return { tree: buildTreeData(10), selected: null }; // Creates a tree with up to 127 nodes
-    case 'CLEAR':
-      return { tree: null, selected: null };
-    // Add more cases as needed for other operations
-    default:
-      return state;
-  }
-};
+      resetNextId();
+      return { tree: buildTreeData(N), selected: null };
 
-
-const listReducer = (state, action) => {
-  const { data, selected } = state;
-
-  switch (action.type) {
-    case 'RUN':
-      return { data: buildData(10), selected: 0 };
     case 'RUN_LOTS':
-      return { data: buildData(10000), selected: 0 };
+      resetNextId();
+      return { tree: buildTreeData(14), selected: null };
+
     case 'ADD':
-      return { data: data.concat(buildData(1000)), selected };
-    case 'UPDATE': {
-      const newData = data.slice(0);
+      // Build a brand new tree to attach
+      const copy = buildTreeData(N);
+      // Attach to a leaf in the existing tree
+      const withCopy = attachCopyAtLeaf(state.tree, copy);
+      return { ...state, tree: withCopy };
 
-      for (let i = 0; i < newData.length; i += 10) {
-        const r = newData[i];
+    case 'UPDATE':
+      const middleNode = Math.floor(Math.pow(2, N) / 2);
+      const updated = findAnUpdate(middleNode, state.tree, '!!!!');
+      if (!updated) return state; // If not found, do nothing
+      return { ...state, tree: updated };
 
-        newData[i] = { id: r.id, label: r.label + " !!!" };
-      }
-
-      return { data: newData, selected };
-    }
     case 'CLEAR':
-      return { data: [], selected: 0 };
-    case 'SWAP_ROWS':
-      const newdata = [...data];
-      if (data.length > 998) {
-        const d1 = newdata[1];
-        const d998 = newdata[998];
-        newdata[1] = d998;
-        newdata[998] = d1;
-      }
-      return { data: newdata, selected };
-    case 'REMOVE': {
-      const idx = data.findIndex((d) => d.id === action.id);
+      resetNextId();
+      return { tree: null, selected: null };
 
-      return { data: [...data.slice(0, idx), ...data.slice(idx + 1)], selected };
-    }
+    case 'SWAP_ROWS':
+      // For example, swapping the node with ID=9
+      const swapped = swapTwoNodes(9, state.tree);
+      return { ...state, tree: swapped || state.tree };
+
     case 'SELECT':
-      return { data, selected: action.id };
+      return { ...state, selected: action.id };
+
+    case 'REMOVE':
+      const removed = removeNodeById(state.tree, action.id);
+      return { ...state, tree: removed, selected: null };
+
     default:
       return state;
   }
-};
-const TreeNode = memo(({ node, selected, dispatch }) => {
+}
+
+const TreeNode = ({ node, selected, dispatch, parentSelected }) => {
   if (!node) return null;
+  const isSelected = selected === node.id;
 
   return (
-    <div className={`node ${selected === node.id ? 'selected' : ''}`} data-id={node.id}>
+    <div
+      className={`node ${isSelected && !parentSelected ? 'selected' : ''} ${
+        parentSelected ? 'parent-selected' : ''
+      }`}
+      data-id={node.id}
+    >
       <div className="node-label">
-        <a onClick={() => dispatch({ type: 'SELECT', id: node.id })}>{node.label}</a>
-        <a onClick={() => dispatch({ type: 'REMOVE', id: node.id })}>
-          <span className="glyphicon glyphicon-remove" aria-hidden="true" />
+        <a onClick={() => dispatch({ type: 'SELECT', id: node.id })}>
+          {node.id} {node.label}
         </a>
+        <span onClick={() => dispatch({ type: 'REMOVE', id: node.id })}>
+          <span className="glyphicon glyphicon-remove" aria-hidden="true" />
+        </span>
       </div>
       <div className="children">
-        <TreeNode node={node.left} selected={selected} dispatch={dispatch} />
-        <TreeNode node={node.right} selected={selected} dispatch={dispatch} />
+        {node.left && (
+          <TreeNode
+            node={node.left}
+            selected={selected}
+            dispatch={dispatch}
+            parentSelected={isSelected}
+          />
+        )}
+        {node.right && (
+          <TreeNode
+            node={node.right}
+            selected={selected}
+            dispatch={dispatch}
+            parentSelected={isSelected}
+          />
+        )}
       </div>
     </div>
   );
-}, (prevProps, nextProps) => prevProps.selected === nextProps.selected && prevProps.node === nextProps.node);
-
-const Row = memo(({ selected, item, dispatch }) => (
-    <tr className={selected ? "danger" : ""}>
-      <td className="col-md-1">{item.id}</td>
-      <td className="col-md-4">
-        <a onClick={() => dispatch({ type: 'SELECT', id: item.id })}>{item.label}</a>
-      </td>
-      <td className="col-md-1">
-        <a onClick={() => dispatch({ type: 'REMOVE', id: item.id })}>
-          <span className="glyphicon glyphicon-remove" aria-hidden="true" />
-        </a>
-      </td>
-      <td className="col-md-6" />
-    </tr>
-), (prevProps, nextProps) => prevProps.selected === nextProps.selected && prevProps.item === nextProps.item)
+};
 
 const Button = ({ id, cb, title }) => (
   <div className="col-sm-6 smallpad">
-    <button type="button" className="btn btn-primary btn-block" id={id} onClick={cb}>{title}</button>
+    <button type="button" className="btn btn-primary btn-block" id={id} onClick={cb}>
+      {title}
+    </button>
   </div>
 );
 
 const Jumbotron = memo(({ dispatch }) => (
-    <div className="jumbotron">
-      <div className="row">
-        <div className="col-md-6">
-          <h1>React Hooks keyed</h1>
-        </div>
-        <div className="col-md-6">
-          <div className="row">
-            <Button id="run" title="Create 1,000 rows" cb={() => dispatch({ type: 'RUN' })} />
-            <Button id="runlots" title="Create 10,000 rows" cb={() => dispatch({ type: 'RUN_LOTS' })} />
-            <Button id="add" title="Append 1,000 rows" cb={() => dispatch({ type: 'ADD' })} />
-            <Button id="update" title="Update every 10th row" cb={() => dispatch({ type: 'UPDATE' })} />
-            <Button id="clear" title="Clear" cb={() => dispatch({ type: 'CLEAR' })} />
-            <Button id="swaprows" title="Swap Rows" cb={() => dispatch({ type: 'SWAP_ROWS' })} />
-          </div>
+  <div className="jumbotron">
+    <div className="row">
+      <div className="col-md-6">
+        <h1>React Hooks keyed</h1>
+      </div>
+      <div className="col-md-6">
+        <div className="row">
+          <Button id="run" title="Create 1023 nodes tree" cb={() => dispatch({ type: 'RUN' })} />
+          <Button id="runlots" title="Create 1683 nodes tree" cb={() => dispatch({ type: 'RUN_LOTS' })} />
+          <Button id="add" title="Append 1023 nodes" cb={() => dispatch({ type: 'ADD' })} />
+          <Button id="update" title="update the middle element" cb={() => dispatch({ type: 'UPDATE' })} />
+          <Button id="clear" title="Clear" cb={() => dispatch({ type: 'CLEAR' })} />
+          <Button id="swaprows" title="swap two subtrees" cb={() => dispatch({ type: 'SWAP_ROWS' })} />
         </div>
       </div>
     </div>
-), () => true);
+  </div>
+));
 
-const Main = () => {
-  const [{ tree, selected }, dispatch] = useReducer(treeReducer, initialState);
+function Main() {
+  const [{ tree, selected }, dispatch] = useReducer(treeReducer, initialTreeState);
 
   return (
     <div className="container">
       <Jumbotron dispatch={dispatch} />
       <div className="tree-container">
-        {tree && <TreeNode node={tree} selected={selected} dispatch={dispatch} />}
+        {tree && (
+          <TreeNode node={tree} selected={selected} dispatch={dispatch} />
+        )}
       </div>
       <span className="preloadicon glyphicon glyphicon-remove" aria-hidden="true" />
     </div>
   );
-};
+}
 
+createRoot(document.getElementById("main")).render(<Main />);
 
-createRoot(document.getElementById("main")).render(<Main/>);

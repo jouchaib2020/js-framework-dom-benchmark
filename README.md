@@ -1,3 +1,13 @@
+# Current benchmark being implemented 
+## Starting point react <--> solid 
+## Creation of a shallow and a deep tree
+- 1. Create a tree with 1000 nodes and 2 children each.
+- 2. Create a tree with 5000 nodes and 2 children.
+- 3. Create a tree with 10000 nodes and 2 children.
+- 4. Create a tree with 100000 nodes and 2 children. 
+
+## TODO: add bechmark for upding a subtree
+
 # Common Operations in Tree-Like Front-End Structures
 
 ## Add New Children to Existing Nodes
