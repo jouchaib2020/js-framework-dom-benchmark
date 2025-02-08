@@ -4,15 +4,14 @@ import { Page } from "puppeteer-core";
 import {
   BenchmarkType,
   Benchmark,
-  memBenchmarkInfos,
   cpuBenchmarkInfos,
   CPUBenchmarkInfo,
   BenchmarkImpl,
-  MemBenchmarkInfo,
 } from "./benchmarksCommon.js";
-import { config, FrameworkData } from "./common.js";
+import { FrameworkData } from "./common.js";
 import {
   checkCountForSelector,
+  setInput,
   checkElementContainsText,
   checkElementExists,
   checkElementHasClass,
@@ -23,18 +22,12 @@ import {
 export abstract class CPUBenchmarkPuppeteer implements BenchmarkImpl {
   type = BenchmarkType.CPU;
   constructor(public benchmarkInfo: CPUBenchmarkInfo) {}
-  abstract init(page: Page, framework: FrameworkData): Promise<any>;
-  abstract run(page: Page, framework: FrameworkData): Promise<any>;
+  abstract init(page: Page, numElements: number,  framework: FrameworkData): Promise<any>;
+  abstract run(page: Page, numElements: number, framework: FrameworkData): Promise<any>;
 }
 
-export abstract class MemBenchmarkPuppeteer implements BenchmarkImpl {
-  type = BenchmarkType.MEM;
-  constructor(public benchmarkInfo: MemBenchmarkInfo) {}
-  abstract init(page: Page, framework: FrameworkData): Promise<any>;
-  abstract run(page: Page, framework: FrameworkData): Promise<any>;
-}
 
-export type BenchmarkPuppeteer = CPUBenchmarkPuppeteer | MemBenchmarkPuppeteer;
+export type BenchmarkPuppeteer = CPUBenchmarkPuppeteer;
 
 export let benchRun = new (class extends CPUBenchmarkPuppeteer {
   constructor() {
@@ -42,17 +35,19 @@ export let benchRun = new (class extends CPUBenchmarkPuppeteer {
   }
 
   N= 10;
-  async init(page: Page) {
-    await checkElementExists(page, "pierce/#run");
+  async init(page: Page, numElements = 1000) {
+    await checkElementExists(page, "pierce/#generate-btn");
     for (let i = 0; i < this.benchmarkInfo.warmupCount; i++) {
-      await clickElement(page, "pierce/#run");
+      await setInput(numElements, "pierce/#generate-btn");
+      await clickElement(page, "pierce/#generate-btn");
       await clickElement(page, "pierce/#clear");
       await checkElementNotExists(page, ".tree-container > .node");
     }
   }
 
-  async run(page: Page) {
-    await clickElement(page, "pierce/#run");
+  async run(page: Page, numElements = 10000) {
+    await setInput(numElements, "pierce/#generate-btn");
+    await clickElement(page, "pierce/#generate-btn");
     await checkCountForSelector(page, ".tree-container .node", Math.pow(2, this.N) - 1);
   }
 })();
@@ -243,96 +238,6 @@ export const benchClear = new (class extends CPUBenchmarkPuppeteer {
   }
 })();
 
-export const benchReadyMemory = new (class extends MemBenchmarkPuppeteer {
-  constructor() {
-    super(memBenchmarkInfos[Benchmark._21]);
-  }
-  async init(page: Page) {
-    await checkElementExists(page, "pierce/#run");
-  }
-  async run() {
-    return await Promise.resolve(null);
-  }
-})();
-
-export const benchRunMemory = new (class extends MemBenchmarkPuppeteer {
-  constructor() {
-    super(memBenchmarkInfos[Benchmark._22]);
-  }
-  async init(page: Page) {
-    await checkElementExists(page, "pierce/#run");
-  }
-  async run(page: Page) {
-    await clickElement(page, "pierce/#run");
-    await checkElementExists(page, "pierce/tbody>tr:nth-of-type(1)>td:nth-of-type(2)>a");
-  }
-})();
-
-export const benchRun10KMemory = new (class extends MemBenchmarkPuppeteer {
-  constructor() {
-    super(memBenchmarkInfos[Benchmark._26]);
-  }
-  async init(page: Page) {
-    await checkElementExists(page, "pierce/#runlots");
-  }
-  async run(page: Page) {
-    await clickElement(page, "pierce/#runlots");
-    await checkElementExists(page, "pierce/tbody>tr:nth-of-type(10000)>td:nth-of-type(2)>a");
-  }
-})();
-
-export const benchUpdate5Memory = new (class extends MemBenchmarkPuppeteer {
-  constructor() {
-    super(memBenchmarkInfos[Benchmark._23]);
-  }
-  async init(page: Page) {
-    await checkElementExists(page, "pierce/#run");
-  }
-  async run(page: Page) {
-    await clickElement(page, "pierce/#run");
-    await checkElementExists(page, "pierce/tbody>tr:nth-of-type(1000)>td:nth-of-type(2)>a");
-    for (let i = 0; i < 5; i++) {
-      await clickElement(page, "pierce/#update");
-      await checkElementContainsText(page, "pierce/tbody>tr:nth-of-type(1)>td:nth-of-type(2)>a", " !!!".repeat(i));
-    }
-  }
-})();
-
-// export const benchReplace5Memory = new (class extends MemBenchmarkPuppeteer {
-//   constructor() {
-//     super(memBenchmarkInfos[Benchmark._24]);
-//   }
-//   async init(page: Page) {
-//     await checkElementExists(page, "pierce/#run");
-//   }
-//   async run(page: Page) {
-//     for (let i = 0; i < 5; i++) {
-//       await clickElement(page, "pierce/#run");
-//       await checkElementContainsText(page, "pierce/tbody>tr:nth-of-type(1000)>td:nth-of-type(1)", (1000 * (i + 1)).toFixed());
-//     }
-//   }
-// })();
-
-export const benchCreateClear5Memory = new (class extends MemBenchmarkPuppeteer {
-  constructor() {
-    super(memBenchmarkInfos[Benchmark._25]);
-  }
-  async init(page: Page) {
-    await checkElementExists(page, "pierce/#run");
-  }
-  async run(page: Page) {
-    for (let i = 0; i < 5; i++) {
-      await clickElement(page, "pierce/#run");
-      await checkElementContainsText(
-        page,
-        "pierce/tbody>tr:nth-of-type(1000)>td:nth-of-type(1)",
-        (1000 * (i + 1)).toFixed()
-      );
-      await clickElement(page, "pierce/#clear");
-      await checkElementNotExists(page, "pierce/tbody>tr:nth-of-type(1000)>td:nth-of-type(1)");
-    }
-  }
-})();
 
 export const benchmarks = [
   benchRun,
@@ -344,10 +249,4 @@ export const benchmarks = [
   benchRunBig,
   benchAppendToManyRows,
   benchClear,
-  benchReadyMemory,
-  benchRunMemory,
-  benchUpdate5Memory,
-  // benchReplace5Memory,
-  benchCreateClear5Memory,
-  benchRun10KMemory,
 ];

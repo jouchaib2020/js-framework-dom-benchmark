@@ -1,6 +1,11 @@
 import * as puppeteer from "puppeteer-core";
 import { Page } from "puppeteer-core";
 import { BenchmarkOptions, wait } from "./common.js";
+
+export async function setInput(n: number, selector: string) {
+   
+}
+
 export async function checkElementNotExists(page: Page, selector: string) {
   let start = Date.now();
   for (let k = 0; k < 10; k++) {

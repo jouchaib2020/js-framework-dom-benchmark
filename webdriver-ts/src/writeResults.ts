@@ -33,20 +33,8 @@ export type ResultSize = {
   type: BenchmarkType.SIZE;
 };
 
-export function writeResults(resultDir: string, res: ResultLightHouse | ResultCPU | ResultMem | ResultSize) {
+export function writeResults(resultDir: string, res: ResultCPU, numElements: number) {
   switch (res.type) {
-    case BenchmarkType.STARTUP:
-      for (let subbench of benchmarksLighthouse.subbenchmarks) {
-        let results = res.results.filter((r) => r.benchmark.id == subbench.id).map((r) => r.result);
-        createResultFile(resultDir, results, res.framework, subbench);
-      }
-      break;
-    case BenchmarkType.SIZE:
-      for (let subbench of benchmarksSize.subbenchmarks) {
-        let results = res.results.filter((r) => r.benchmark.id == subbench.id).map((r) => r.result);
-        createResultFile(resultDir, results, res.framework, subbench);
-      }
-      break;
     case BenchmarkType.CPU:
       createResultFile(
         resultDir,
@@ -55,11 +43,9 @@ export function writeResults(resultDir: string, res: ResultLightHouse | ResultCP
           paint: res.results.map((r) => Number(r.paint.toFixed(1))),
          },
         res.framework,
-        res.benchmark
+        res.benchmark,
+        numElements
       );
-      break;
-    case BenchmarkType.MEM:
-      createResultFile(resultDir, res.results as any as number[], res.framework, res.benchmark);
       break;
   }
 }
@@ -68,26 +54,18 @@ function createResultFile(
   resultDir: string,
   data: number[] | { [key: string]: number[] },
   framework: FrameworkData,
-  benchmark: BenchmarkInfo
+  benchmark: BenchmarkInfo,
+  numElements: number
 ) {
   let type = "";
   switch (benchmark.type) {
     case BenchmarkType.CPU:
       type = "cpu";
       break;
-    case BenchmarkType.MEM:
-      type = "memory";
-      break;
-    case BenchmarkType.STARTUP:
-      type = "startup";
-      break;
-    case BenchmarkType.SIZE:
-      type = "size";
-      break;
   }
   let convertResult = (label: string, data: number[]) => {
     let res = stats(data);
-    console.log(`result ${fileName(framework, benchmark)} ${label} ${JSON.stringify(res)}`);
+    console.log(`result ${fileName(framework, benchmark, numElements)} ${label} ${JSON.stringify(res)}`);
     return res;
   };
   if (Array.isArray(data)) {
@@ -98,7 +76,7 @@ function createResultFile(
       type: type,
       values: { DEFAULT: convertResult("", data as number[]) },
     };
-    fs.writeFileSync(`${resultDir}/${fileName(framework, benchmark)}`, JSON.stringify(result), {
+    fs.writeFileSync(`${resultDir}/${fileName(framework, benchmark, numElements)}`, JSON.stringify(result), {
       encoding: "utf8",
     });
   } else {
@@ -113,7 +91,7 @@ function createResultFile(
       type: type,
       values,
     };
-    fs.writeFileSync(`${resultDir}/${fileName(framework, benchmark)}`, JSON.stringify(result), {
+    fs.writeFileSync(`${resultDir}/${fileName(framework, benchmark, numElements)}`, JSON.stringify(result), {
       encoding: "utf8",
     });
   }

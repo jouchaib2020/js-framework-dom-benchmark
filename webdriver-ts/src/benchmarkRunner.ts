@@ -16,9 +16,6 @@ import {
   CPUBenchmarkInfo,
   cpuBenchmarkInfosArray,
   CPUBenchmarkResult,
-  MemBenchmarkInfo,
-  SizeBenchmarkInfo,
-  StartupBenchmarkInfo,
 } from "./benchmarksCommon.js";
 import { StartupBenchmarkResult } from "./benchmarksLighthouse.js";
 import { writeResults } from "./writeResults.js";
@@ -28,17 +25,11 @@ import { SizeBenchmarkResult } from "./benchmarksSize.js";
 function forkAndCallBenchmark(
   framework: FrameworkData,
   benchmarkInfo: BenchmarkInfo,
-  benchmarkOptions: BenchmarkOptions
+  benchmarkOptions: BenchmarkOptions,
+  numElements: number
 ): Promise<ErrorAndWarning<number | CPUBenchmarkResult | StartupBenchmarkResult | SizeBenchmarkResult>> {
   return new Promise((resolve, reject) => {
-    let forkedRunner = null;
-    if (benchmarkInfo.type === BenchmarkType.STARTUP_MAIN) {
-      forkedRunner = "dist/forkedBenchmarkRunnerLighthouse.js";
-    } else if (benchmarkInfo.type === BenchmarkType.SIZE_MAIN) {
-      forkedRunner = "dist/forkedBenchmarkRunnerSize.js";
-    } else {
-      forkedRunner = "dist/forkedBenchmarkRunnerPuppeteer.js";
-    }
+    let forkedRunner = "dist/forkedBenchmarkRunnerPuppeteer.js";
     console.log("forking", forkedRunner);
     const forked = fork(forkedRunner);
     if (config.LOG_DETAILS) console.log("FORKING:  forked child process");
@@ -47,6 +38,7 @@ function forkAndCallBenchmark(
       framework,
       benchmarkId: benchmarkInfo.id,
       benchmarkOptions,
+      numElements,
     });
     forked.on("message", (msg: ErrorAndWarning<number | CPUBenchmarkResult | StartupBenchmarkResult>) => {
       if (config.LOG_DETAILS) console.log("FORKING: main process got message from child", msg);
@@ -65,55 +57,11 @@ function forkAndCallBenchmark(
   });
 }
 
-async function runBenchmakLoopSize(
-  framework: FrameworkData,
-  benchmarkInfo: SizeBenchmarkInfo,
-  benchmarkOptions: BenchmarkOptions
-): Promise<{ errors: string[]; warnings: string[] }> {
-  let warnings: string[] = [];
-  let errors: string[] = [];
-
-  let results: Array<SizeBenchmarkResult> = [];
-  let count = benchmarkOptions.numIterationsForSizeBenchmark;
-  benchmarkOptions.batchSize = 1;
-
-  let done = 0;
-
-  console.log("runBenchmakLoopSize", framework, benchmarkInfo);
-
-  while (done < count) {
-    console.log("FORKING:", benchmarkInfo.id, "BatchSize", benchmarkOptions.batchSize);
-    let res = await forkAndCallBenchmark(framework, benchmarkInfo, benchmarkOptions);
-    if (Array.isArray(res.result)) {
-      results = results.concat(res.result as SizeBenchmarkResult[]);
-    } else {
-      results.push(res.result);
-    }
-    warnings = warnings.concat(res.warnings);
-    if (res.error) {
-      errors.push(`Executing ${framework.uri} and benchmark ${benchmarkInfo.id} failed: ` + res.error);
-    }
-    done++;
-  }
-  if (config.WRITE_RESULTS) {
-    await writeResults(benchmarkOptions.resultsDirectory, {
-      framework: framework,
-      benchmark: benchmarkInfo,
-      results: results,
-      type: BenchmarkType.SIZE,
-    });
-  }
-  return { errors, warnings };
-  // } else {
-  //     return executeBenchmark(frameworks, keyed, frameworkName, benchmarkName, benchmarkOptions);
-}
-
 async function runBenchmakLoop(
   framework: FrameworkData,
-  benchmarkInfo: CPUBenchmarkInfo | MemBenchmarkInfo,
+  benchmarkInfo: CPUBenchmarkInfo,
   benchmarkOptions: BenchmarkOptions,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  plausibilityCheck: PlausibilityCheck
+  numElements: number
 ): Promise<{ errors: string[]; warnings: string[] }> {
   let warnings: string[] = [];
   let errors: string[] = [];
@@ -129,14 +77,12 @@ async function runBenchmakLoop(
     benchmarkOptions.batchSize = 1;
   }
 
-  let retries = 0;
-
   console.log("runBenchmakLoop", framework, benchmarkInfo);
 
   while (results.length < count) {
     benchmarkOptions.batchSize = Math.min(benchmarkOptions.batchSize, count - results.length);
     console.log("FORKING:", benchmarkInfo.id, "BatchSize", benchmarkOptions.batchSize);
-    let res = await forkAndCallBenchmark(framework, benchmarkInfo, benchmarkOptions);
+    let res = await forkAndCallBenchmark(framework, benchmarkInfo, benchmarkOptions, numElements);
     if (Array.isArray(res.result)) {
       results = results.concat(res.result as number[] | CPUBenchmarkResult[]);
     } else if (res.result !== undefined) {
@@ -156,15 +102,8 @@ async function runBenchmakLoop(
         benchmark: benchmarkInfo,
         results: results as CPUBenchmarkResult[],
         type: BenchmarkType.CPU,
-      });
-    } else {
-      await writeResults(benchmarkOptions.resultsDirectory, {
-        framework: framework,
-        benchmark: benchmarkInfo,
-        results: results as number[],
-        type: BenchmarkType.MEM,
-      });
-    }
+      }, numElements);
+    } 
   }
   return { errors, warnings };
 }
@@ -199,27 +138,17 @@ async function runBench(
       try {
         let result;
 
-        if (benchmarkInfos[j].type == BenchmarkType.SIZE_MAIN) {
-          result = await runBenchmakLoopSize(
-            runFrameworks[i],
-            benchmarkInfos[j] as unknown as SizeBenchmarkInfo,
-            benchmarkOptions
-          );
-        } else if (benchmarkInfos[j].type == BenchmarkType.CPU) {
+        if (benchmarkInfos[j].type == BenchmarkType.CPU) {
+      const nums = [100, 500, 1000, 10000];
+      for (let n = 0; n < nums.length; j++){
           result = await runBenchmakLoop(
             runFrameworks[i],
             benchmarkInfos[j] as CPUBenchmarkInfo,
             benchmarkOptions,
-            plausibilityCheck
-          );
-        } else {
-          result = await runBenchmakLoop(
-            runFrameworks[i],
-            benchmarkInfos[j] as MemBenchmarkInfo,
-            benchmarkOptions,
-            plausibilityCheck
+            nums[n]
           );
         }
+      }
         errors = errors.concat(result.errors);
         warnings = warnings.concat(result.warnings);
       } catch (error) {

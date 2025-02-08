@@ -112,6 +112,7 @@ export function removeNodeById(root, nodeId) {
 
 /** Attach a copy of the tree `copy` to the first leaf in `root`. */
 export function attachCopyAtLeaf(root, copy) {
+  console.log(root, copy)
   if (!root) return root;
   const queue = [root];
   while (queue.length > 0) {
@@ -120,10 +121,17 @@ export function attachCopyAtLeaf(root, copy) {
 
     if (!current.left && !current.right) {
       current.left = copy;
+      console.log("leaf: ", current)
       return { ...root };
     }
     if (current.left) queue.push(current.left);
     if (current.right) queue.push(current.right);
   }
   return root;
+}
+
+export function traverseTree(tree) {
+  console.log(tree)
+  if (tree.left) traverseTree(tree.left);
+  if (tree.right) traverseTree(tree.right);
 }

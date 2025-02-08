@@ -481,7 +481,8 @@ export function fileNameTrace(
   framework: FrameworkData,
   benchmark: CPUBenchmarkInfo,
   run: number,
-  benchmarkOptions: BenchmarkOptions
+  benchmarkOptions: BenchmarkOptions,
+  numElements: number
 ) {
-  return `${benchmarkOptions.tracesDirectory}/${framework.fullNameWithKeyedAndVersion}_${benchmark.id}_${run}.json`;
+  return `${benchmarkOptions.tracesDirectory}/${framework.fullNameWithKeyedAndVersion}_${benchmark.id}_${run}_n-${numElements}.json`;
 }

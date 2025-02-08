@@ -65,8 +65,8 @@ export interface CPUBenchmarkResult {
   paint: number;
 }
 
-export function fileName(framework: FrameworkData, benchmark: BenchmarkInfo) {
-  return `${framework.fullNameWithKeyedAndVersion}_${benchmark.id}.json`;
+export function fileName(framework: FrameworkData, benchmark: BenchmarkInfo, numElements: number) {
+  return `${framework.fullNameWithKeyedAndVersion}_${benchmark.id}_n-${numElements}.json`;
 }
 
 export enum Benchmark {
